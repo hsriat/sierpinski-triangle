@@ -12,7 +12,7 @@ $(function() {
   var drawTimer;
   var panStart = {};
 
-  $(document).on('mousewheel', function(e) {
+  $(document).on('wheel', function(e) {
     e.preventDefault();
     if (drawTimer) {
       window.clearTimeout(drawTimer);
@@ -20,8 +20,9 @@ $(function() {
     drawTimer = window.setTimeout(function() {
       Graph.draw();
     }, 100);
-    Graph.zoom(e.originalEvent.wheelDelta, {x: e.clientX, y: e.clientY});
+    Graph.zoom(-e.originalEvent.deltaY, {x: e.originalEvent.clientX, y: e.originalEvent.clientY});
   });
+
   $(document).on('dblclick', function(e) {
     e.preventDefault();
     Graph.zoom(1000, {x: e.clientX, y: e.clientY});
@@ -51,7 +52,7 @@ $(function() {
 
 var Graph = {
 
-  zoomSpeed   : 5,
+  zoomSpeed   : 10,
   minSize     : 10,
   svgNS       : 'http://www.w3.org/2000/svg',
 
