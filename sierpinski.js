@@ -54,6 +54,7 @@ var Graph = {
 
   zoomSpeed   : 10,
   minSize     : 10,
+  bufferSize  : 0.7,
   svgNS       : 'http://www.w3.org/2000/svg',
 
   init: function(width, height) {
@@ -203,12 +204,14 @@ SierpinskiTreeNode.prototype.draw = function(x, y, sideLength) {
 
   var points = this.getPoints(x, y, sideLength);
 
-  // if the node is outisde the visible area, remove it to avoid unwanted recursion
+  // if the node is outisde the visible and the buffered area, remove it to avoid unwanted recursion
+  var bufX = Graph.width * Graph.bufferSize;
+  var bufY = Graph.height * Graph.bufferSize;
   if (
-    (points[0].x <= 0 && points[1].x <= 0 && points[2].x <= 0) ||
-    (points[0].y <= 0 && points[1].y <= 0 && points[2].y <= 0) ||
-    (points[0].x > Graph.width && points[1].x > Graph.width && points[2].x > Graph.width) ||
-    (points[0].y > Graph.height && points[1].y > Graph.height && points[2].y > Graph.height)
+    (points[0].x <= -bufX && points[1].x <= -bufX && points[2].x <= -bufX) ||
+    (points[0].y <= -bufY && points[1].y <= -bufY && points[2].y <= -bufY) ||
+    (points[0].x > Graph.width + bufX && points[1].x > Graph.width + bufX && points[2].x > Graph.width + bufX) ||
+    (points[0].y > Graph.height + bufY && points[1].y > Graph.height + bufY && points[2].y > Graph.height + bufY)
   ) {
     this.removePolygon();
     this.removeChildNodes();
