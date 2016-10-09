@@ -52,17 +52,18 @@ $(function() {
 
 var Graph = {
 
-  zoomSpeed   : 10,
-  minSize     : 10,
-  bufferSize  : 0.7,
-  svgNS       : 'http://www.w3.org/2000/svg',
+  zoomSpeed     : 10,
+  initialDepth  : 6,
+  bufferSize    : 0.7,
+  svgNS         : 'http://www.w3.org/2000/svg',
 
   init: function(width, height) {
 
     this.width                = width;
     this.height               = height;
-    this.sideLength           = Math.min(this.height * 0.6, this.width * 0.6);  // initial side length of the root triangle
-    this.offset               = {x: this.width/2, y: this.height/2};            // in the beginning, draw in the middle
+    this.sideLength           = Math.min(this.height * 0.6, this.width * 0.6);                // initial side length of the root triangle
+    this.offset               = {x: this.width/2, y: this.height/2};                          // in the beginning, draw in the middle
+    this.minSize              = Math.ceil(this.sideLength / Math.pow(2, this.initialDepth));  // min side length required to split a triangle
     this.immediateZoomFactor  = 1;
     this.finalZoomFactor      = 1;
 
