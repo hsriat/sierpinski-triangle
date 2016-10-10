@@ -157,8 +157,8 @@ SierpinskiTree.prototype.draw = function(centerX, centerY, sideLength) {
 };
 
 
-var SierpinskiTreeNode = function(parent, depth) {
-  this.depth        = depth || (parent ? parent.depth + 1 : 0);
+var SierpinskiTreeNode = function(parent) {
+  this.depth        = parent ? parent.depth + 1 : 0;
   this.tree         = parent ? parent.tree : null;
   this.firstChild   = false;
   this.secondChild  = false;
