@@ -152,7 +152,8 @@ function SierpinskiTree(container) {
 };
 
 SierpinskiTree.prototype.draw = function(centerX, centerY, sideLength) {
-  this.root.draw(centerX - sideLength / 2, centerY + sideLength * Math.tan(Math.PI / 6) / 2, sideLength);
+  var coords = Trigonometry.translateCoords(centerX, centerY, sideLength);
+  this.root.draw(coords.x, coords.y, coords.sideLength);
 };
 
 
@@ -203,7 +204,7 @@ SierpinskiTreeNode.prototype.draw = function(x, y, sideLength) {
  * sideLength: Length of the side of the triangle
  */
 
-  var points = this.getPoints(x, y, sideLength);
+  var points = Trigonometry.getAllVertices(x, y, sideLength);
 
   // if the node is outisde the visible and the buffered area, remove it to avoid unwanted recursion
   var bufX = Graph.width * Graph.bufferSize;
@@ -225,9 +226,14 @@ SierpinskiTreeNode.prototype.draw = function(x, y, sideLength) {
     this.removePolygon();
     this.reproduce();
 
-    this.firstChild.draw(x + sideLength / 4, y - sideLength * Math.sin(Math.PI / 3) / 2, sideLength / 2);
-    this.firstChild.nextSibling.draw(x + sideLength / 2, y, sideLength / 2);
-    this.firstChild.previousSibling.draw(x, y, sideLength / 2);
+    (function(childNodes, childCoords) {
+      for (var i = 0; i < 3; i++) {
+        childNodes[i].draw(childCoords[i].x, childCoords[i].y, childCoords[i].sideLength);
+      }
+    })(
+      [this.firstChild, this.firstChild.nextSibling, this.firstChild.previousSibling],
+      Trigonometry.getChildCoords(x, y, sideLength)
+    );
 
   // if triangle is too small to further divide, remove child nodes if present and draw its polygon
   } else {
@@ -235,19 +241,6 @@ SierpinskiTreeNode.prototype.draw = function(x, y, sideLength) {
     this.removeChildNodes();
     this.drawPolygon(points);
   }
-};
-
-SierpinskiTreeNode.prototype.getPoints = function(x, y, sideLength) {
-  return [{
-    x: x + sideLength/2,
-    y: y - sideLength * Math.sin(Math.PI / 3)
-  }, {
-    x: x + sideLength,
-    y: y
-  }, {
-    x: x,
-    y: y
-  }];
 };
 
 SierpinskiTreeNode.prototype.drawPolygon = function(points) {
@@ -290,4 +283,46 @@ SierpinskiTreeNode.prototype.clear = function() {
     delete this.firstChild;
     child.clear();
   }
+};
+
+
+Trigonometry = {
+
+  translateCoords: function(centerX, centerY, sideLength) {
+    return {
+      x: centerX - sideLength / 2,
+      y: centerY + sideLength * Math.tan(Math.PI / 6) / 2,
+      sideLength : sideLength
+    };
+  },
+
+  getChildCoords: function(x, y, sideLength) {
+    return [{
+      x: x + sideLength / 4,
+      y: y - sideLength * Math.sin(Math.PI / 3) / 2,
+      sideLength: sideLength / 2
+    }, {
+      x: x + sideLength / 2,
+      y: y,
+      sideLength: sideLength / 2
+    }, {
+      x: x,
+      y: y,
+      sideLength: sideLength / 2
+    }];
+  },
+
+  getAllVertices: function(x, y, sideLength) {
+    return [{
+      x: x + sideLength/2,
+      y: y - sideLength * Math.sin(Math.PI / 3)
+    }, {
+      x: x + sideLength,
+      y: y
+    }, {
+      x: x,
+      y: y
+    }];
+  }
+
 };
