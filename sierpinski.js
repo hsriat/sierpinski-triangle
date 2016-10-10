@@ -158,32 +158,26 @@ SierpinskiTree.prototype.draw = function(centerX, centerY, sideLength) {
 
 
 var SierpinskiTreeNode = function(parent, depth) {
-  this.depth            = depth || (parent ? parent.depth + 1 : 0);
-  this.tree             = parent ? parent.tree : null;
-  this.firstChild       = false;
-  this.nextSibling      = false;
-  this.previousSibling  = false;
-};
-
-SierpinskiTreeNode.prototype.after = function(node) {
-  this.nextSibling = node;
-  node.previousSibling = this;
-  return this.nextSibling;
+  this.depth        = depth || (parent ? parent.depth + 1 : 0);
+  this.tree         = parent ? parent.tree : null;
+  this.firstChild   = false;
+  this.secondChild  = false;
+  this.thirdChild   = false;
 };
 
 SierpinskiTreeNode.prototype.countNodes = function() {
   var count = 1;
   if (this.firstChild) {
     count = count + this.firstChild.countNodes();
-    count = count + this.firstChild.nextSibling.countNodes();
-    count = count + this.firstChild.previousSibling.countNodes();
+    count = count + this.secondChild.countNodes();
+    count = count + this.thirdChild.countNodes();
   }
   return count;
 };
 
 SierpinskiTreeNode.prototype.getDepth = function() {
   if (this.firstChild) {
-    return Math.max(this.firstChild.getDepth(), this.firstChild.nextSibling.getDepth(), this.firstChild.previousSibling.getDepth());
+    return Math.max(this.firstChild.getDepth(), this.secondChild.getDepth(), this.thirdChild.getDepth());
   }
   return this.depth;
 };
@@ -191,8 +185,9 @@ SierpinskiTreeNode.prototype.getDepth = function() {
 SierpinskiTreeNode.prototype.reproduce = function() {
 
   if (!this.firstChild) {
-    this.firstChild = new SierpinskiTreeNode(this);
-    this.firstChild.after(new SierpinskiTreeNode(this)).after(new SierpinskiTreeNode(this)).after(this.firstChild);
+    this.firstChild   = new SierpinskiTreeNode(this);
+    this.secondChild  = new SierpinskiTreeNode(this);
+    this.thirdChild   = new SierpinskiTreeNode(this);
   }
 };
 
@@ -231,7 +226,7 @@ SierpinskiTreeNode.prototype.draw = function(x, y, sideLength) {
         childNodes[i].draw(childCoords[i].x, childCoords[i].y, childCoords[i].sideLength);
       }
     })(
-      [this.firstChild, this.firstChild.nextSibling, this.firstChild.previousSibling],
+      [this.firstChild, this.secondChild, this.thirdChild],
       Trigonometry.getChildCoords(x, y, sideLength)
     );
 
@@ -266,23 +261,17 @@ SierpinskiTreeNode.prototype.removePolygon = function() {
 SierpinskiTreeNode.prototype.removeChildNodes = function() {
   if (this.firstChild) {
     this.firstChild.clear();
+    this.secondChild.clear();
+    this.thirdChild.clear();
     delete this.firstChild;
+    delete this.secondChild;
+    delete this.thirdChild;
   }
 };
 
 SierpinskiTreeNode.prototype.clear = function() {
   this.removePolygon();
-  if (this.nextSibling) {
-    var next = this.nextSibling;
-    delete this.nextSibling;
-    delete next.previousSibling;
-    next.clear();
-  }
-  if (this.firstChild) {
-    var child = this.firstChild;
-    delete this.firstChild;
-    child.clear();
-  }
+  this.removeChildNodes();
 };
 
 
