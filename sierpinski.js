@@ -52,13 +52,32 @@ $(function() {
 
 var Graph = {
 
-  zoomSpeed     : 10,
-  initialDepth  : 6,
-  bufferSize    : 0.7,
-  svgNS         : 'http://www.w3.org/2000/svg',
+  zoomSpeed: 10,
+  /*
+   * Scroll wheel zoom speed factor
+   */
+
+  initialDepth: 6,
+  /*
+   * Depth of the intially displayed Sierpinski Triangle
+   */
+
+  bufferSize: 0.7,
+  /*
+   * Buffered screen outside the current visible area
+   */
+
+  svgNS: 'http://www.w3.org/2000/svg',
+  /*
+   * Namespace for SVG tags
+   */
 
   init: function(width, height) {
-
+  /*
+   * Initialises the graph with the given width and height
+   * @param Width of the drawable area
+   * @param Height of the drawable area
+   */
     this.width                = width;
     this.height               = height;
     this.sideLength           = Math.min(this.height * 0.6, this.width * 0.6);                // initial side length of the root triangle
@@ -71,16 +90,21 @@ var Graph = {
   },
 
   initSierpinski: function () {
-
+  /*
+   * Initialises the Sierpinski triangle tree
+   */
     this.svg = document.body.appendChild(document.createElementNS(this.svgNS, 'svg'));
     this.svg.setAttribute('width', this.width);
     this.svg.setAttribute('height', this.height);
 
-    this.tree = new SierpinskiTree(this.svg.appendChild(document.createElementNS(Graph.svgNS, 'g')));
+    this.tree = new SierpinskiTree(this.svg.appendChild(document.createElementNS(this.svgNS, 'g')));
   },
 
   draw: function() {
-
+  /*
+   * Draws (or redraws) whole triangle (ie. all required nodes)
+   * Takes coords changed zooming and panning into account after resetting viewBox to the inital state
+   */
     this.finalZoomFactor = this.finalZoomFactor * this.immediateZoomFactor;
 
     // reset viewBox to screen
@@ -112,7 +136,11 @@ var Graph = {
   },
 
   zoom: function(delta, position) {
-
+  /*
+   * Zooms the triangle by chaning SVG's viewBox
+   * @param Mouse wheel event's delta
+   * @param {Object} x,y coords of the mouse position
+   */
     // zoom grows everytime
     this.immediateZoomFactor = this.immediateZoomFactor * (1 + (delta * this.zoomSpeed)/10000);
 
@@ -132,6 +160,10 @@ var Graph = {
   },
 
   pan: function(coords) {
+  /*
+   * Pans the triangle by changing SVG's viewBox
+   * @param {Object} Change in x and y coords
+   */
     this.panOffset = coords;
 
     // pan the svg viewBox
@@ -145,19 +177,33 @@ var Graph = {
 };
 
 
-function SierpinskiTree(container) {
+var SierpinskiTree = function(container) {
+  /*
+   * Endless Sierpinski Tree
+   * @param Container SVG node
+   */
   this.container = container;
   this.root = new SierpinskiTreeNode();
   this.root.tree = this;
 };
 
 SierpinskiTree.prototype.draw = function(centerX, centerY, sideLength) {
+  /*
+   * Draws the Sierpinski triangle at the given coords
+   * @param X coord of the centre of the triangle
+   * @param Y coord of the centre of the triangle
+   * @param Length of the side of the triangle
+   */
   var coords = Trigonometry.translateCoords(centerX, centerY, sideLength);
   this.root.draw(coords.x, coords.y, coords.sideLength);
 };
 
 
 var SierpinskiTreeNode = function(parent) {
+  /*
+   * Individual Sierpinski Tree node - each node has three child nodes
+   * @param Parent SierpinskiTreeNode object
+   */
   this.depth        = parent ? parent.depth + 1 : 0;
   this.tree         = parent ? parent.tree : null;
   this.firstChild   = false;
@@ -166,6 +212,9 @@ var SierpinskiTreeNode = function(parent) {
 };
 
 SierpinskiTreeNode.prototype.countNodes = function() {
+  /*
+   * Dev method to recursively count all sub nodes in the node (including the node)
+   */
   var count = 1;
   if (this.firstChild) {
     count = count + this.firstChild.countNodes();
@@ -176,6 +225,9 @@ SierpinskiTreeNode.prototype.countNodes = function() {
 };
 
 SierpinskiTreeNode.prototype.getDepth = function() {
+  /*
+   * Dev method to recursively get the maximum node depth for the current node
+   */
   if (this.firstChild) {
     return Math.max(this.firstChild.getDepth(), this.secondChild.getDepth(), this.thirdChild.getDepth());
   }
@@ -183,7 +235,9 @@ SierpinskiTreeNode.prototype.getDepth = function() {
 };
 
 SierpinskiTreeNode.prototype.reproduce = function() {
-
+  /*
+   * Creates three child nodes for the current SierpinskiTreeNode
+   */
   if (!this.firstChild) {
     this.firstChild   = new SierpinskiTreeNode(this);
     this.secondChild  = new SierpinskiTreeNode(this);
@@ -192,13 +246,12 @@ SierpinskiTreeNode.prototype.reproduce = function() {
 };
 
 SierpinskiTreeNode.prototype.draw = function(x, y, sideLength) {
-/*
- * Recursively draws a triangle node
- * x: X coord of the bottom left corner 
- * y: Y coord of the bottom left corner
- * sideLength: Length of the side of the triangle
- */
-
+  /*
+   * Recursively draws the current node
+   * @param X coord of the bottom left corner
+   * @param Y coord of the bottom left corner
+   * @param Length of the side of the triangle
+   */
   var points = Trigonometry.getAllVertices(x, y, sideLength);
 
   // if the node is outisde the visible and the buffered area, remove it to avoid unwanted recursion
@@ -239,6 +292,10 @@ SierpinskiTreeNode.prototype.draw = function(x, y, sideLength) {
 };
 
 SierpinskiTreeNode.prototype.drawPolygon = function(points) {
+  /*
+   * Adds an SVG polygin node for the current SierpinskiTreeNode
+   * @param {Array} x,y coords for all three vertices of the triangle
+   */
   if (!this.polygon) {
     this.polygon = document.createElementNS(Graph.svgNS, 'polygon');
     this.polygon.setAttribute('style', 'fill:#669');
@@ -252,6 +309,9 @@ SierpinskiTreeNode.prototype.drawPolygon = function(points) {
 };
 
 SierpinskiTreeNode.prototype.removePolygon = function() {
+  /*
+   * Removes the linked polygon node
+   */
   if (this.polygon) {
     this.tree.container.removeChild(this.polygon);
     delete this.polygon;
@@ -259,6 +319,9 @@ SierpinskiTreeNode.prototype.removePolygon = function() {
 };
 
 SierpinskiTreeNode.prototype.removeChildNodes = function() {
+  /*
+   * Removes and unlinks all the child nodes
+   */
   if (this.firstChild) {
     this.firstChild.clear();
     this.secondChild.clear();
@@ -270,6 +333,9 @@ SierpinskiTreeNode.prototype.removeChildNodes = function() {
 };
 
 SierpinskiTreeNode.prototype.clear = function() {
+  /*
+   * Removes linked polygon node and SierpinskiTreeNode child nodes (does not remove the current SierpinskiTreeNode)
+   */
   this.removePolygon();
   this.removeChildNodes();
 };
@@ -278,6 +344,12 @@ SierpinskiTreeNode.prototype.clear = function() {
 Trigonometry = {
 
   translateCoords: function(centerX, centerY, sideLength) {
+    /*
+     * Take the coords of the centre of the triangle and returns coords of the bottom-left vertex
+     * @param X coord of the centre of the triangle
+     * @param Y coord of the centre of the triangle
+     * @param Length of the side of the triangle
+     */
     return {
       x: centerX - sideLength / 2,
       y: centerY + sideLength * Math.tan(Math.PI / 6) / 2,
@@ -286,6 +358,12 @@ Trigonometry = {
   },
 
   getChildCoords: function(x, y, sideLength) {
+    /*
+     * Take the bottom-left vertex coords and side of a triangle and returns coords and side length of all three child triangles
+     * @param X coord of the bottom-left vertex
+     * @param Y coord of the bottom-left vertex
+     * @param Length of the side of the triangle
+     */
     return [{
       x: x + sideLength / 4,
       y: y - sideLength * Math.sin(Math.PI / 3) / 2,
@@ -302,6 +380,12 @@ Trigonometry = {
   },
 
   getAllVertices: function(x, y, sideLength) {
+    /*
+     * Take the bottom-left vertex coords and side of a triangle and returns coords for all vertices
+     * @param X coord of the bottom-left vertex
+     * @param Y coord of the bottom-left vertex
+     * @param Length of the side
+     */
     return [{
       x: x + sideLength/2,
       y: y - sideLength * Math.sin(Math.PI / 3)
