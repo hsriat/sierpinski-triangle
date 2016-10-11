@@ -376,24 +376,19 @@ SierpinskiTreeNode.prototype.removePolygon = function() {
 
 SierpinskiTreeNode.prototype.removeChildNodes = function() {
   /*
-   * Removes and unlinks all the child nodes
+   * Recursively removes and unlinks all the child nodes and any linked polygons
    */
   if (this.firstChild) {
-    this.firstChild.clear();
-    this.secondChild.clear();
-    this.thirdChild.clear();
+    this.firstChild.removePolygon();
+    this.firstChild.removeChildNodes();
+    this.secondChild.removePolygon();
+    this.secondChild.removeChildNodes();
+    this.thirdChild.removePolygon();
+    this.thirdChild.removeChildNodes();
     delete this.firstChild;
     delete this.secondChild;
     delete this.thirdChild;
   }
-};
-
-SierpinskiTreeNode.prototype.clear = function() {
-  /*
-   * Removes linked polygon node and SierpinskiTreeNode child nodes (does not remove the current SierpinskiTreeNode)
-   */
-  this.removePolygon();
-  this.removeChildNodes();
 };
 
 
