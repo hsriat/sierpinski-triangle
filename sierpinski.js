@@ -6,56 +6,112 @@
 
 $(function() {
 
-  Graph.init($(window).width(), $(window).height());
-  Graph.draw();
-
-  var drawTimer;
-  var panStart = {};
+  Controller.init($(window).width(), $(window).height());
 
   $(document).on('wheel', function(e) {
     e.preventDefault();
-    if (drawTimer) {
-      window.clearTimeout(drawTimer);
-    }
-    drawTimer = window.setTimeout(function() {
-      Graph.draw();
-    }, 100);
-    Graph.zoom(-e.originalEvent.deltaY, {x: e.originalEvent.clientX, y: e.originalEvent.clientY});
+    Controller.onZoom(-e.originalEvent.deltaY, {x: e.originalEvent.clientX, y: e.originalEvent.clientY});
   });
 
   $(document).on('dblclick', function(e) {
     e.preventDefault();
-    Graph.zoom(1000, {x: e.clientX, y: e.clientY});
-    Graph.draw();
+    Controller.onDblClick({x: e.clientX, y: e.clientY});
   });
-
 
   $(document).on('mousedown', function(e) {
     e.preventDefault();
-    panStart = {x: e.clientX, y: e.clientY};
-  });
+    Controller.onDragStart({x: e.clientX, y: e.clientY});
 
-  $(document).on('mousemove', function(e) {
-    e.preventDefault();
-    if ('x' in panStart) {
-      Graph.pan({x: e.clientX - panStart.x, y: e.clientY - panStart.y});
-    }
+    $(document).on('mousemove.panning', function(e) {
+      e.preventDefault();
+      Controller.onDrag({x: e.clientX, y: e.clientY});
+    });
   });
 
   $(document).on('mouseup', function(e) {
     e.preventDefault();
-    panStart = {};
-    Graph.draw();
+    Controller.onDragStop();
+    $(document).off('.panning');
   });
+
 });
 
-
-var Graph = {
+var Controller = {
 
   zoomSpeed: 10,
   /*
    * Scroll wheel zoom speed factor
    */
+
+  init: function(width, height) {
+  /*
+   * Intialises the controller and creates the graph
+   * @param Screen width
+   * @param Screen height
+   */
+    Graph.init(width, height);
+    Graph.draw();
+    this.drawTimer  = false;
+    this.dragging   = false;
+    this.panStart   = {};
+  },
+
+  onZoom: function(delta, mouseCoords) {
+  /*
+   * Zoom handler for mouse wheel event
+   * @param Wheel event's horizontal delta (deltaY)
+   * @param Mouse coords
+   */
+    if (this.drawTimer) {
+      window.clearTimeout(this.drawTimer);
+    }
+    this.drawTimer = window.setTimeout(function() {
+      Graph.draw();
+    }, 100);
+    Graph.zoom(1 + (delta * this.zoomSpeed)/10000, mouseCoords);
+  },
+
+  onDragStart: function(mouseCoords) {
+  /*
+   * Drag start handler
+   * @param Mouse coords
+   */
+    this.panStart = mouseCoords;
+  },
+
+  onDrag: function(mouseCoords) {
+  /*
+   * Drag handler
+   * @param Mouse coords
+   */
+    this.dragging = true;
+    Graph.pan({x: mouseCoords.x - this.panStart.x, y: mouseCoords.y - this.panStart.y});
+  },
+
+  onDragStop: function() {
+  /*
+   * Drag stop handler
+   * @param Mouse coords
+   */
+    if (this.dragging) {
+      this.panStart = {};
+      this.dragging = false;
+      Graph.draw();
+    }
+  },
+
+  onDblClick: function(mouseCoords) {
+  /*
+   * Double click handler
+   * @param Mouse coords
+   */
+    Graph.zoom(1.5, mouseCoords);
+    Graph.draw();
+  }
+};
+
+
+var Graph = {
 
   initialDepth: 6,
   /*
@@ -138,11 +194,11 @@ var Graph = {
   zoom: function(delta, position) {
   /*
    * Zooms the triangle by chaning SVG's viewBox
-   * @param Mouse wheel event's delta
+   * @param Zoom factor delta
    * @param {Object} x,y coords of the mouse position
    */
     // zoom grows everytime
-    this.immediateZoomFactor = this.immediateZoomFactor * (1 + (delta * this.zoomSpeed)/10000);
+    this.immediateZoomFactor = this.immediateZoomFactor * delta;
 
     // calculate current offset of the centre of the triangle
     this.zoomOffset = {
