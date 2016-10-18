@@ -3,40 +3,41 @@
    //    //
  //3/////2//
 
+var Sierpinski = {};
 
 $(function() {
 
-  Controller.init($(window).width(), $(window).height());
+  Sierpinski.Controller.init($(window).width(), $(window).height());
 
   $(document).on('wheel', function(e) {
     e.preventDefault();
-    Controller.onZoom(-e.originalEvent.deltaY, {x: e.originalEvent.clientX, y: e.originalEvent.clientY});
+    Sierpinski.Controller.onZoom(-e.originalEvent.deltaY, {x: e.originalEvent.clientX, y: e.originalEvent.clientY});
   });
 
   $(document).on('dblclick', function(e) {
     e.preventDefault();
-    Controller.onDblClick({x: e.clientX, y: e.clientY});
+    Sierpinski.Controller.onDblClick({x: e.clientX, y: e.clientY});
   });
 
   $(document).on('mousedown', function(e) {
     e.preventDefault();
-    Controller.onDragStart({x: e.clientX, y: e.clientY});
+    Sierpinski.Controller.onDragStart({x: e.clientX, y: e.clientY});
 
     $(document).on('mousemove.panning', function(e) {
       e.preventDefault();
-      Controller.onDrag({x: e.clientX, y: e.clientY});
+      Sierpinski.Controller.onDrag({x: e.clientX, y: e.clientY});
     });
   });
 
   $(document).on('mouseup', function(e) {
     e.preventDefault();
-    Controller.onDragStop();
+    Sierpinski.Controller.onDragStop();
     $(document).off('.panning');
   });
 
 });
 
-var Controller = {
+Sierpinski.Controller = {
 
   zoomSpeed: 10,
   /*
@@ -49,8 +50,8 @@ var Controller = {
    * @param Screen width
    * @param Screen height
    */
-    Graph.init(width, height);
-    Graph.draw();
+    Sierpinski.Graph.init(width, height);
+    Sierpinski.Graph.draw();
     this.drawTimer  = false;
     this.dragging   = false;
     this.panStart   = {};
@@ -66,9 +67,9 @@ var Controller = {
       window.clearTimeout(this.drawTimer);
     }
     this.drawTimer = window.setTimeout(function() {
-      Graph.draw();
+      Sierpinski.Graph.draw();
     }, 100);
-    Graph.zoom(1 + (delta * this.zoomSpeed)/10000, mouseCoords);
+    Sierpinski.Graph.zoom(1 + (delta * this.zoomSpeed)/10000, mouseCoords);
   },
 
   onDragStart: function(mouseCoords) {
@@ -85,7 +86,7 @@ var Controller = {
    * @param Mouse coords
    */
     this.dragging = true;
-    Graph.pan({x: mouseCoords.x - this.panStart.x, y: mouseCoords.y - this.panStart.y});
+    Sierpinski.Graph.pan({x: mouseCoords.x - this.panStart.x, y: mouseCoords.y - this.panStart.y});
   },
 
   onDragStop: function() {
@@ -96,7 +97,7 @@ var Controller = {
     if (this.dragging) {
       this.panStart = {};
       this.dragging = false;
-      Graph.draw();
+      Sierpinski.Graph.draw();
     }
   },
 
@@ -105,13 +106,13 @@ var Controller = {
    * Double click handler
    * @param Mouse coords
    */
-    Graph.zoom(1.5, mouseCoords);
-    Graph.draw();
+    Sierpinski.Graph.zoom(1.5, mouseCoords);
+    Sierpinski.Graph.draw();
   }
 };
 
 
-var Graph = {
+Sierpinski.Graph = {
 
   initialDepth: 6,
   /*
@@ -142,10 +143,10 @@ var Graph = {
     this.immediateZoomFactor  = 1;
     this.finalZoomFactor      = 1;
 
-    this.initSierpinski();
+    this.initTree();
   },
 
-  initSierpinski: function () {
+  initTree: function () {
   /*
    * Initialises the Sierpinski triangle tree
    */
@@ -153,7 +154,7 @@ var Graph = {
     this.svg.setAttribute('width', this.width);
     this.svg.setAttribute('height', this.height);
 
-    this.tree = new SierpinskiTree(this.svg.appendChild(document.createElementNS(this.svgNS, 'g')));
+    this.tree = new Sierpinski.Tree(this.svg.appendChild(document.createElementNS(this.svgNS, 'g')));
   },
 
   draw: function() {
@@ -233,32 +234,32 @@ var Graph = {
 };
 
 
-var SierpinskiTree = function(container) {
+Sierpinski.Tree = function(container) {
   /*
    * Endless Sierpinski Tree
    * @param Container SVG node
    */
   this.container = container;
-  this.root = new SierpinskiTreeNode();
+  this.root = new Sierpinski.TreeNode();
   this.root.tree = this;
 };
 
-SierpinskiTree.prototype.draw = function(centerX, centerY, sideLength) {
+Sierpinski.Tree.prototype.draw = function(centerX, centerY, sideLength) {
   /*
    * Draws the Sierpinski triangle at the given coords
    * @param X coord of the centre of the triangle
    * @param Y coord of the centre of the triangle
    * @param Length of the side of the triangle
    */
-  var coords = Trigonometry.translateCoords(centerX, centerY, sideLength);
+  var coords = Sierpinski.Trigonometry.translateCoords(centerX, centerY, sideLength);
   this.root.draw(coords.x, coords.y, coords.sideLength);
 };
 
 
-var SierpinskiTreeNode = function(parent) {
+Sierpinski.TreeNode = function(parent) {
   /*
    * Individual Sierpinski Tree node - each node has three child nodes
-   * @param Parent SierpinskiTreeNode object
+   * @param Parent TreeNode object
    */
   this.depth        = parent ? parent.depth + 1 : 0;
   this.tree         = parent ? parent.tree : null;
@@ -267,7 +268,7 @@ var SierpinskiTreeNode = function(parent) {
   this.thirdChild   = false;
 };
 
-SierpinskiTreeNode.prototype.countNodes = function() {
+Sierpinski.TreeNode.prototype.countNodes = function() {
   /*
    * Dev method to recursively count all sub nodes in the node (including the node)
    */
@@ -280,7 +281,7 @@ SierpinskiTreeNode.prototype.countNodes = function() {
   return count;
 };
 
-SierpinskiTreeNode.prototype.getDepth = function() {
+Sierpinski.TreeNode.prototype.getDepth = function() {
   /*
    * Dev method to recursively get the maximum node depth for the current node
    */
@@ -290,34 +291,34 @@ SierpinskiTreeNode.prototype.getDepth = function() {
   return this.depth;
 };
 
-SierpinskiTreeNode.prototype.reproduce = function() {
+Sierpinski.TreeNode.prototype.reproduce = function() {
   /*
-   * Creates three child nodes for the current SierpinskiTreeNode
+   * Creates three child nodes for the current TreeNode
    */
   if (!this.firstChild) {
-    this.firstChild   = new SierpinskiTreeNode(this);
-    this.secondChild  = new SierpinskiTreeNode(this);
-    this.thirdChild   = new SierpinskiTreeNode(this);
+    this.firstChild   = new Sierpinski.TreeNode(this);
+    this.secondChild  = new Sierpinski.TreeNode(this);
+    this.thirdChild   = new Sierpinski.TreeNode(this);
   }
 };
 
-SierpinskiTreeNode.prototype.draw = function(x, y, sideLength) {
+Sierpinski.TreeNode.prototype.draw = function(x, y, sideLength) {
   /*
    * Recursively draws the current node
    * @param X coord of the bottom left corner
    * @param Y coord of the bottom left corner
    * @param Length of the side of the triangle
    */
-  var points = Trigonometry.getAllVertices(x, y, sideLength);
+  var points = Sierpinski.Trigonometry.getAllVertices(x, y, sideLength);
 
   // if the node is outisde the visible and the buffered area, remove it to avoid unwanted recursion
-  var bufX = Graph.width * Graph.bufferSize;
-  var bufY = Graph.height * Graph.bufferSize;
+  var bufX = Sierpinski.Graph.width * Sierpinski.Graph.bufferSize;
+  var bufY = Sierpinski.Graph.height * Sierpinski.Graph.bufferSize;
   if (
     (points[0].x <= -bufX && points[1].x <= -bufX && points[2].x <= -bufX) ||
     (points[0].y <= -bufY && points[1].y <= -bufY && points[2].y <= -bufY) ||
-    (points[0].x > Graph.width + bufX && points[1].x > Graph.width + bufX && points[2].x > Graph.width + bufX) ||
-    (points[0].y > Graph.height + bufY && points[1].y > Graph.height + bufY && points[2].y > Graph.height + bufY)
+    (points[0].x > Sierpinski.Graph.width + bufX && points[1].x > Sierpinski.Graph.width + bufX && points[2].x > Sierpinski.Graph.width + bufX) ||
+    (points[0].y > Sierpinski.Graph.height + bufY && points[1].y > Sierpinski.Graph.height + bufY && points[2].y > Sierpinski.Graph.height + bufY)
   ) {
     this.removePolygon();
     this.removeChildNodes();
@@ -325,7 +326,7 @@ SierpinskiTreeNode.prototype.draw = function(x, y, sideLength) {
   }
 
   // if triangle can further divide, create further nodes and remove any linked polygon
-  if (sideLength > Graph.minSize) {
+  if (sideLength > Sierpinski.Graph.minSize) {
 
     this.removePolygon();
     this.reproduce();
@@ -336,7 +337,7 @@ SierpinskiTreeNode.prototype.draw = function(x, y, sideLength) {
       }
     })(
       [this.firstChild, this.secondChild, this.thirdChild],
-      Trigonometry.getChildCoords(x, y, sideLength)
+      Sierpinski.Trigonometry.getChildCoords(x, y, sideLength)
     );
 
   // if triangle is too small to further divide, remove child nodes if present and draw its polygon
@@ -347,13 +348,13 @@ SierpinskiTreeNode.prototype.draw = function(x, y, sideLength) {
   }
 };
 
-SierpinskiTreeNode.prototype.drawPolygon = function(points) {
+Sierpinski.TreeNode.prototype.drawPolygon = function(points) {
   /*
-   * Adds an SVG polygin node for the current SierpinskiTreeNode
+   * Adds an SVG polygin node for the current TreeNode
    * @param {Array} x,y coords for all three vertices of the triangle
    */
   if (!this.polygon) {
-    this.polygon = document.createElementNS(Graph.svgNS, 'polygon');
+    this.polygon = document.createElementNS(Sierpinski.Graph.svgNS, 'polygon');
     this.polygon.setAttribute('style', 'fill:#669');
   }
   this.polygon.setAttribute('points',
@@ -364,7 +365,7 @@ SierpinskiTreeNode.prototype.drawPolygon = function(points) {
   this.tree.container.appendChild(this.polygon);
 };
 
-SierpinskiTreeNode.prototype.removePolygon = function() {
+Sierpinski.TreeNode.prototype.removePolygon = function() {
   /*
    * Removes the linked polygon node
    */
@@ -374,7 +375,7 @@ SierpinskiTreeNode.prototype.removePolygon = function() {
   }
 };
 
-SierpinskiTreeNode.prototype.removeChildNodes = function() {
+Sierpinski.TreeNode.prototype.removeChildNodes = function() {
   /*
    * Recursively removes and unlinks all the child nodes and any linked polygons
    */
@@ -392,7 +393,7 @@ SierpinskiTreeNode.prototype.removeChildNodes = function() {
 };
 
 
-Trigonometry = {
+Sierpinski.Trigonometry = {
 
   translateCoords: function(centerX, centerY, sideLength) {
     /*
