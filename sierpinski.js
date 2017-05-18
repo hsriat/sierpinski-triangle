@@ -67,7 +67,7 @@ Sierpinski.Controller = {
       window.clearTimeout(this.drawTimer);
     }
     this.drawTimer = window.setTimeout(function() {
-      Sierpinski.Graph.draw();
+      Sierpinski.Graph.draw(true);
     }, 100);
     Sierpinski.Graph.zoom(1 + (delta * this.zoomSpeed)/10000, mouseCoords);
   },
@@ -119,6 +119,11 @@ Sierpinski.Graph = {
    * Depth of the intially displayed Sierpinski Triangle
    */
 
+  minZoomFactor: 0.4,
+  /*
+   * Ignore zooming out if zoom factor is less then this value
+   */
+
   bufferSize: 0.7,
   /*
    * Buffered screen outside the current visible area
@@ -157,11 +162,18 @@ Sierpinski.Graph = {
     this.tree = new Sierpinski.Tree(this.svg.appendChild(document.createElementNS(this.svgNS, 'g')));
   },
 
-  draw: function() {
+  draw: function(ignoreIfSameZoom) {
   /*
    * Draws (or redraws) whole triangle (ie. all required nodes)
    * Takes coords changed zooming and panning into account after resetting viewBox to the inital state
+   * @param {Boolean} If true, will not redraw if immediateZoomFactor has not changed
    */
+
+    // zoom has not changed and the ignore-flag is on
+    if (ignoreIfSameZoom && this.immediateZoomFactor === 1) {
+      return;
+    }
+
     this.finalZoomFactor = this.finalZoomFactor * this.immediateZoomFactor;
 
     // reset viewBox to screen
@@ -197,7 +209,13 @@ Sierpinski.Graph = {
    * Zooms the triangle by chaning SVG's viewBox
    * @param Zoom factor delta
    * @param {Object} x,y coords of the mouse position
+   * @return {Boolean} true if zoom has been applied, false otherwise
    */
+    // force minZoomFactor when zooming out
+    if (delta < 1 && this.immediateZoomFactor * this.finalZoomFactor <= this.minZoomFactor) {
+      return false;
+    }
+
     // zoom grows everytime
     this.immediateZoomFactor = this.immediateZoomFactor * delta;
 
@@ -214,6 +232,8 @@ Sierpinski.Graph = {
       this.width/this.immediateZoomFactor + ' ' +
       this.height/this.immediateZoomFactor
     );
+
+    return true;
   },
 
   pan: function(coords) {
