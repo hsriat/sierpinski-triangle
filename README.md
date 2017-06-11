@@ -1,4 +1,7 @@
 # Sierpinski Triangle
+
+View on [GitHub pages](https://hsriat.github.io/sierpinski-triangle/)
+
 _Sierpinski Triangle is a fractal and attractive fixed set with the overall shape of an equilateral triangle, subdivided recursively into smaller equilateral triangles. - Wikipedia_
 
 ![alt Sierpinski triangle evolution](https://upload.wikimedia.org/wikipedia/commons/thumb/0/05/Sierpinski_triangle_evolution.svg/512px-Sierpinski_triangle_evolution.svg.png)
