@@ -3,11 +3,21 @@
    //    //
  //3/////2//
 
-var Sierpinski = {};
+var Sierpinski = {
+  PERFORMANCE_THRESHOLD: 10
+};
 
 $(function() {
 
-  Sierpinski.Controller.init($(window).width(), $(window).height());
+  // Inititialise the triangle for an initial depth that gives best performance vs quality experience
+  (function(thresholdMs, initialDepth, processingMs, width, height, start) {
+    while (processingMs < thresholdMs) {
+      Sierpinski.Controller.destroy();
+      start = window.performance.now();
+      Sierpinski.Controller.init(width, height, ++initialDepth);
+      processingMs = window.performance.now() - start;
+    }
+  })(Sierpinski.PERFORMANCE_THRESHOLD, 0, 0, $(window).width(), $(window).height());
 
   $(document).on('wheel', function(e) {
     e.preventDefault();
@@ -44,13 +54,14 @@ Sierpinski.Controller = {
    * Scroll wheel zoom speed factor
    */
 
-  init: function(width, height) {
+  init: function(width, height, initialDepth) {
   /*
-   * Intialises the controller and creates the graph
+   * Initialises the controller and creates the graph
    * @param Screen width
    * @param Screen height
+   * @param Initial depth of the triangle tree
    */
-    Sierpinski.Graph.init(width, height);
+    Sierpinski.Graph.init(width, height, initialDepth);
     Sierpinski.Graph.draw();
     this.drawTimer  = false;
     this.dragging   = false;
@@ -108,16 +119,18 @@ Sierpinski.Controller = {
    */
     Sierpinski.Graph.zoom(1.5, mouseCoords);
     Sierpinski.Graph.draw();
+  },
+
+  destroy: function() {
+  /*
+   * Destroys the instance
+   */
+    Sierpinski.Graph.destroy();
   }
 };
 
 
 Sierpinski.Graph = {
-
-  initialDepth: 6,
-  /*
-   * Depth of the intially displayed Sierpinski Triangle
-   */
 
   minZoomFactor: 0.4,
   /*
@@ -134,17 +147,18 @@ Sierpinski.Graph = {
    * Namespace for SVG tags
    */
 
-  init: function(width, height) {
+  init: function(width, height, initialDepth) {
   /*
    * Initialises the graph with the given width and height
    * @param Width of the drawable area
    * @param Height of the drawable area
+   * @param Initial depth of the triangle tree
    */
     this.width                = width;
     this.height               = height;
-    this.sideLength           = Math.min(this.height * 0.6, this.width * 0.6);                // initial side length of the root triangle
-    this.offset               = {x: this.width/2, y: this.height/2};                          // in the beginning, draw in the middle
-    this.minSize              = Math.ceil(this.sideLength / Math.pow(2, this.initialDepth));  // min side length required to split a triangle
+    this.sideLength           = Math.min(this.height * 0.6, this.width * 0.6);          // initial side length of the root triangle
+    this.offset               = {x: this.width/2, y: this.height/2};                    // in the beginning, draw in the middle
+    this.minSize              = Math.ceil(this.sideLength / Math.pow(2, initialDepth)); // min side length required to split a triangle
     this.immediateZoomFactor  = 1;
     this.finalZoomFactor      = 1;
 
@@ -250,6 +264,20 @@ Sierpinski.Graph = {
       this.width + ' ' +
       this.height
     );
+  },
+
+  destroy: function() {
+  /*
+   * Destroys the instance
+   */
+    if (this.tree) {
+      this.tree.destroy();
+      delete this.tree;
+    }
+    if (this.svg && this.svg.parentNode) {
+      this.svg.parentNode.removeChild(this.svg);
+      delete this.svg;
+    }
   }
 };
 
@@ -275,6 +303,15 @@ Sierpinski.Tree.prototype.draw = function(centerX, centerY, sideLength) {
   this.root.draw(coords.x, coords.y, coords.sideLength);
 };
 
+Sierpinski.Tree.prototype.destroy = function() {
+  /*
+   * Destroys the instance
+   */
+  if (this.root) {
+    this.root.destroy();
+    delete this.root;
+  }
+};
 
 Sierpinski.TreeNode = function(parent) {
   /*
@@ -412,6 +449,16 @@ Sierpinski.TreeNode.prototype.removeChildNodes = function() {
   }
 };
 
+Sierpinski.TreeNode.prototype.destroy = function() {
+  /*
+   * Destroys the instance
+   */
+  this.removePolygon();
+  this.removeChildNodes();
+  if (this.tree) {
+    delete this.tree;
+  }
+};
 
 Sierpinski.Trigonometry = {
 
